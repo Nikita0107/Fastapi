@@ -15,7 +15,7 @@ services:
 
   celery:
     build: .
-    command: celery worker -A tasks -l info
+    command: celery -A tasks worker -l info
     volumes:
       - .:/app
     depends_on:
