@@ -2,12 +2,17 @@ from celery import Celery
 import pytesseract
 from PIL import Image
 from database import new_session, DocumentText
+import asyncio
 
-
-celery = Celery('tasks', broker='redis://localhost:6379/0')
+# Замените localhost на имя сервиса Redis в Docker
+celery = Celery('tasks', broker='redis://redis:6379/0')
 
 @celery.task
-async def extract_text_from_image(doc_id, file_path):
+def extract_text_from_image(doc_id, file_path):
+    # Запускаем асинхронную функцию в цикле событий
+    asyncio.run(extract_text(doc_id, file_path))
+
+async def extract_text(doc_id, file_path):
     # Загрузка изображения
     image = Image.open(file_path)
 
