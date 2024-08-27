@@ -1,11 +1,15 @@
 from datetime import datetime
+import os
 import sqlalchemy as sa
 import sqlalchemy.orm as so
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.sql import func
 
-engine = create_async_engine('postgresql+asyncpg://postgres:123@localhost:5432/mydb')
+# Получаем URL базы данных из переменной окружения
+DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql+asyncpg://postgres:123@db:5432/mydb')
+
+engine = create_async_engine(DATABASE_URL)
 new_session = async_sessionmaker(engine, expire_on_commit=False)
 
 Base = declarative_base()
@@ -26,14 +30,10 @@ class DocumentText(Base):
 
     document: so.Mapped[Document] = so.relationship('Document', back_populates='document_texts')
 
-
 async def create_tables():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-
 async def delete_tables():
-   async with engine.begin() as conn:
-       await conn.run_sync(Base.metadata.drop_all)
-
-
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)

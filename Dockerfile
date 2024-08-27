@@ -1,15 +1,20 @@
-FROM python:3.12.5
+# Используем официальный образ Python в качестве базового образа
+FROM python:3.10-slim
 
-RUN pip install --upgrade pip
-
-RUN mkdir /app
-
+# Устанавливаем рабочую директорию внутри контейнера
 WORKDIR /app
 
-COPY . /app
+# Копируем файл зависимостей в контейнер
+COPY requirements.txt .
 
-RUN pip install -r requirements.txt
+# Устанавливаем зависимости
+RUN pip install --no-cache-dir -r requirements.txt
 
-EXPOSE 80
+# Копируем все файлы проекта в контейнер
+COPY . .
 
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]
+# Открываем порт, по которому будет доступно приложение
+EXPOSE 8000
+
+# Команда для запуска приложения
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
