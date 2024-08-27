@@ -7,7 +7,8 @@ from sqlalchemy.orm import declarative_base
 from sqlalchemy.sql import func
 
 # Получаем URL базы данных из переменной окружения
-DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql+asyncpg://postgres:123@db:5432/mydb')
+
+DATABASE_URL = "postgresql+asyncpg://postgres:123@db:5432/mydb"
 
 engine = create_async_engine(DATABASE_URL)
 new_session = async_sessionmaker(engine, expire_on_commit=False)
