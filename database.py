@@ -1,5 +1,4 @@
 from datetime import datetime
-import os
 import sqlalchemy as sa
 import sqlalchemy.orm as so
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
@@ -7,10 +6,9 @@ from sqlalchemy.orm import declarative_base
 from sqlalchemy.sql import func
 
 # Получаем URL базы данных из переменной окружения
-
 DATABASE_URL = "postgresql+asyncpg://postgres:123@db:5432/mydb"
 
-engine = create_async_engine(DATABASE_URL)
+engine = create_async_engine(DATABASE_URL, echo=True)
 new_session = async_sessionmaker(engine, expire_on_commit=False)
 
 Base = declarative_base()
@@ -20,7 +18,6 @@ class Document(Base):
     id: so.Mapped[int] = so.mapped_column(sa.Integer, primary_key=True, autoincrement=True)
     name: so.Mapped[str] = so.mapped_column(sa.String(64), unique=True)
     date: so.Mapped[datetime] = so.mapped_column(sa.TIMESTAMP(timezone=True), index=True, server_default=func.now())
-
     document_texts: so.Mapped['DocumentText'] = so.relationship('DocumentText', back_populates='document')
 
 class DocumentText(Base):
@@ -28,13 +25,14 @@ class DocumentText(Base):
     id: so.Mapped[int] = so.mapped_column(sa.Integer, primary_key=True, autoincrement=True)
     document_id: so.Mapped[int] = so.mapped_column(sa.Integer, sa.ForeignKey('documents.id'))
     text: so.Mapped[str] = so.mapped_column(sa.String(1000))
-
     document: so.Mapped[Document] = so.relationship('Document', back_populates='document_texts')
 
 async def create_tables():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+    print("Таблицы созданы")
 
 async def delete_tables():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
+    print("Таблицы удалены")
