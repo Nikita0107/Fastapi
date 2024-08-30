@@ -24,4 +24,3 @@ class DocumentTextsResponse(BaseModel):
     texts: List[DocumentTextResponse]
 
     model_config = ConfigDict(from_attributes=True)
-

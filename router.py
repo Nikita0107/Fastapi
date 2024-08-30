@@ -79,10 +79,10 @@ async def analyze_doc(doc_id: int):
     async with new_session() as session:
         document = await session.get(Document, doc_id)
         if not document:
-            raise HTTPException(status_code=404, detail="Документ не найден")
+            raise HTTPException(status_code=404, detail="Document not found")
 
     file_path = os.path.join(DOCUMENTS_DIR, document.name)
-    extract_text_from_image.delay(doc_id, file_path)  # Извлечение текста из изображения с использованием Celery
+    await extract_text_from_image(doc_id, file_path)  # Извлечение текста из изображения
 
     return {"message": "Анализ начат"}
 

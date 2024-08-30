@@ -6,9 +6,9 @@ from sqlalchemy.orm import declarative_base
 from sqlalchemy.sql import func
 
 # Получаем URL базы данных из переменной окружения
-DATABASE_URL = "postgresql+asyncpg://postgres:123@db:5432/mydb"
+DATABASE_URL = 'postgresql+asyncpg://postgres:123@localhost:5432/mydb'
 
-engine = create_async_engine(DATABASE_URL, echo=True)
+engine = create_async_engine(DATABASE_URL)
 new_session = async_sessionmaker(engine, expire_on_commit=False)
 
 Base = declarative_base()
@@ -30,9 +30,8 @@ class DocumentText(Base):
 async def create_tables():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    print("Таблицы созданы")
+
 
 async def delete_tables():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
-    print("Таблицы удалены")
