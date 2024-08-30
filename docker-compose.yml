@@ -9,15 +9,14 @@ services:
       - db
       - redis
     environment:
-      - DATABASE_URL=postgresql+asyncpg://postgres:123@localhost:5432/mydb
-
-      - REDIS_URL=redis://redis:6379/0
+      DATABASE_URL: postgresql+asyncpg://postgres:220689@db:5432/mydb
+      REDIS_URL: redis://redis:6379/0
 
   db:
     image: postgres:13
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 123
+      POSTGRES_PASSWORD: 220689
       POSTGRES_DB: mydb
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -32,8 +31,8 @@ services:
       - redis
       - db
     environment:
-      - DATABASE_URL=postgresql+asyncpg://postgres:123@localhost:5432/mydb
-      - REDIS_URL=redis://redis:6379/0
+      DATABASE_URL: postgresql+asyncpg://postgres:220689@db:5432/mydb
+      REDIS_URL: redis://redis:6379/0
 
 volumes:
   postgres_data:

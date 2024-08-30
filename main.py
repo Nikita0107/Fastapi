@@ -4,18 +4,10 @@ from database import create_tables, delete_tables, new_session  # Убедите
 from router import router as router_doc
 
 # Проверка подключения к базе данных
-async def test_connection():
-    async with new_session() as session:
-        try:
-            await session.execute("SELECT 1")  # Простая проверка подключения
-            print("Подключение к базе данных успешно")
-        except Exception as e:
-            print(f"Ошибка подключения к базе данных: {e}")
 
 # Декоратор для управления жизненным циклом приложения
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await test_connection()  # Проверка подключения
     await create_tables()  # Создаем таблицы в базе данных
     print('Таблицы созданы')
     yield
