@@ -1,6 +1,7 @@
 from tasks import extract_text_from_image
-from database import new_session, Document, DocumentText
+from database import new_session
 from fastapi import HTTPException, File, UploadFile, APIRouter
+from database import DocumentText, Document
 from datetime import datetime, timezone
 import shutil
 import os
@@ -15,8 +16,7 @@ DOCUMENTS_DIR = "documents"
 os.makedirs(DOCUMENTS_DIR, exist_ok=True)
 
 
-@router.post('/upload_doc', response_model=DocumentResponse, summary="Загрузить картинку",
-             description="Загрузите картинку с текстом на сервер. Размер должен быть меньше 2 МБ")
+@router.post('/upload_doc', response_model=DocumentResponse)
 async def document_upload(file: UploadFile = File(...)):
     file.file.seek(0, 2)  # Перемещаем указатель в конец файла
     file_size = file.file.tell()  # Получаем размер файла
@@ -42,8 +42,7 @@ async def document_upload(file: UploadFile = File(...)):
     return document
 
 
-@router.delete("/doc_delete/{doc_id}", summary="Удалить документ",
-               description="Удалить документ и связанные с ним текстовые записи из базы данных..")
+@router.delete("/doc_delete/{doc_id}")
 async def delete_doc(doc_id: int):
     async with new_session() as session:
         try:
@@ -51,7 +50,8 @@ async def delete_doc(doc_id: int):
                 # Находим документ по ID
                 document = await session.get(Document, doc_id)
                 if not document:
-                    raise HTTPException(status_code=404, detail="Документ не найден")
+                    raise HTTPException(status_code=404, detail="Document not found")
+
                 # Удаляем файл с диска
                 file_path = os.path.join(DOCUMENTS_DIR, document.name)
                 if os.path.exists(file_path):
@@ -73,8 +73,7 @@ async def delete_doc(doc_id: int):
         return {"Сообщение": "документ удален"}
 
 
-@router.post("/doc_analyse/{doc_id}", summary="Анализ документа",
-             description="Запустить анализ извлечения текста в указанном документе.")
+@router.post("/doc_analyse/{doc_id}")
 async def analyze_doc(doc_id: int):
     async with new_session() as session:
         document = await session.get(Document, doc_id)
@@ -82,13 +81,13 @@ async def analyze_doc(doc_id: int):
             raise HTTPException(status_code=404, detail="Document not found")
 
     file_path = os.path.join(DOCUMENTS_DIR, document.name)
-    await extract_text_from_image(doc_id, file_path)  # Извлечение текста из изображения
+    # Извлечение текста из изображения
+    await extract_text_from_image(doc_id, file_path)
 
     return {"message": "Анализ начат"}
 
 
-@router.get('/get_text/{doc_id}', response_model=DocumentTextsResponse, summary='Получить извлеченный текст',
-            description="Получить извлеченный текст, связанный с указанным документом.")
+@router.get("/get_text/{doc_id}", response_model=DocumentTextsResponse)
 async def get_text(doc_id: int):
     async with new_session() as session:
         document_texts = await session.execute(
@@ -97,7 +96,7 @@ async def get_text(doc_id: int):
         texts = document_texts.scalars().all()
 
         if not texts:
-            raise HTTPException(status_code=404, detail="Текст для этого документа не найден")
+            raise HTTPException(status_code=404, detail="No text found for this document")
 
     return DocumentTextsResponse(
         document_id=doc_id,

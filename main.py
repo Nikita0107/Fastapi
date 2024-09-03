@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-from database import create_tables, delete_tables, new_session  # Убедитесь, что импортируете new_session
+from database import create_tables, delete_tables
 from router import router as router_doc
 
 # Проверка подключения к базе данных
