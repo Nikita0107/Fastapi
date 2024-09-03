@@ -16,7 +16,10 @@ DOCUMENTS_DIR = "documents"
 os.makedirs(DOCUMENTS_DIR, exist_ok=True)
 
 
-@router.post('/upload_doc', response_model=DocumentResponse)
+@router.post('/upload_doc', tags=["Задачи"], response_model=DocumentResponse,
+             summary="Загрузка документа",
+             description="Загружает документ и сохраняет его в системе. "
+                         "Поддерживается максимальный размер файла 2 МБ.")
 async def document_upload(file: UploadFile = File(...)):
     file.file.seek(0, 2)  # Перемещаем указатель в конец файла
     file_size = file.file.tell()  # Получаем размер файла
@@ -42,7 +45,10 @@ async def document_upload(file: UploadFile = File(...)):
     return document
 
 
-@router.delete("/doc_delete/{doc_id}")
+@router.delete("/doc_delete/{doc_id}",
+                tags=["Задачи"],
+                summary="Удаление документа",
+                description="Удаляет документ и все связанные данные по ID документа.")
 async def delete_doc(doc_id: int):
     async with new_session() as session:
         try:
@@ -73,7 +79,10 @@ async def delete_doc(doc_id: int):
         return {"Сообщение": "документ удален"}
 
 
-@router.post("/doc_analyse/{doc_id}")
+@router.post("/doc_analyse/{doc_id}",
+              tags=["Задачи"],
+              summary="Анализ документа",
+              description="Запускает анализ документа для извлечения текста по ID документа.")
 async def analyze_doc(doc_id: int):
     async with new_session() as session:
         document = await session.get(Document, doc_id)
@@ -87,7 +96,11 @@ async def analyze_doc(doc_id: int):
     return {"message": "Анализ начат"}
 
 
-@router.get("/get_text/{doc_id}", response_model=DocumentTextsResponse)
+@router.get("/get_text/{doc_id}",
+            tags=["Задачи"],
+            response_model=DocumentTextsResponse,
+            summary="Получение текста документа",
+            description="Получает извлеченный текст для указанного документа по ID.")
 async def get_text(doc_id: int):
     async with new_session() as session:
         document_texts = await session.execute(

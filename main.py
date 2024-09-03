@@ -3,21 +3,18 @@ from contextlib import asynccontextmanager
 from database import create_tables, delete_tables
 from router import router as router_doc
 
-# Проверка подключения к базе данных
-
 # Декоратор для управления жизненным циклом приложения
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await create_tables()  # Создаем таблицы в базе данных
+    await create_tables()
     print('Таблицы созданы')
     yield
-    await delete_tables()  # Удаляем таблицы из базы данных
+    await delete_tables()
     print('Таблицы удалены')
 
-# Создаем экземпляр FastAPI с указанным жизненным циклом и настройками документации
 app = FastAPI(
     title="Nika",
-    description="Апи сохраняет картинку в БД и на локальный сервер. Извлекает текст с картинки в БД. Удаляет по id записи с БД и картинку с сервера!",
+    description="API сохраняет изображение в базу данных и на локальный сервер. Извлекает текст с изображения в базе данных. Удаляет запись по ID из базы данных и изображение с сервера!",
     version="1.0.0",
     lifespan=lifespan
 )
