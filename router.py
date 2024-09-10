@@ -79,7 +79,7 @@ async def delete_doc(doc_id: int):
         return {"Сообщение": "документ удален"}
 
 
-@router.post('/doc_analyse/{doc_id}',
+@router.put('/doc_analyse/{doc_id}',
               tags=['Задачи'],
               summary='Анализ документа',
               description='Запускает анализ документа для извлечения текста по ID документа.')
