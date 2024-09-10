@@ -5,10 +5,10 @@ from router import router as router_doc
 
 # Декоратор для управления жизненным циклом приложения
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_: FastAPI):  # Используем _ для неиспользуемого параметра
     await create_tables()
     print('Таблицы созданы')
-    yield
+    yield  # Здесь происходит выход из контекста
     await delete_tables()
     print('Таблицы удалены')
 
@@ -16,7 +16,7 @@ app = FastAPI(
     title="Nika",
     description="API сохраняет изображение в базу данных и на локальный сервер. Извлекает текст с изображения в базе данных. Удаляет запись по ID из базы данных и изображение с сервера!",
     version="1.0.0",
-    lifespan=lifespan
+    lifespan=lifespan  # Используем lifespan с параметром
 )
 
 # Добавляем роутер

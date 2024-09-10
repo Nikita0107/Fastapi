@@ -12,14 +12,14 @@ from schemas import DocumentResponse, DocumentTextsResponse, DocumentTextRespons
 router = APIRouter()
 
 # Каталог для хранения загруженных документов
-DOCUMENTS_DIR = "documents"
+DOCUMENTS_DIR = 'documents'
 os.makedirs(DOCUMENTS_DIR, exist_ok=True)
 
 
-@router.post('/upload_doc', tags=["Задачи"], response_model=DocumentResponse,
-             summary="Загрузка документа",
-             description="Загружает документ и сохраняет его в системе. "
-                         "Поддерживается максимальный размер файла 2 МБ.")
+@router.post('/upload_doc', tags=['Задачи'], response_model=DocumentResponse,
+             summary='Загрузка документа',
+             description='Загружает документ и сохраняет его в системе. '
+                         'Поддерживается максимальный размер файла 2 МБ.')
 async def document_upload(file: UploadFile = File(...)):
     file.file.seek(0, 2)  # Перемещаем указатель в конец файла
     file_size = file.file.tell()  # Получаем размер файла
@@ -45,10 +45,10 @@ async def document_upload(file: UploadFile = File(...)):
     return document
 
 
-@router.delete("/doc_delete/{doc_id}",
-                tags=["Задачи"],
-                summary="Удаление документа",
-                description="Удаляет документ и все связанные данные по ID документа.")
+@router.delete('/doc_delete/{doc_id}',
+                tags=['Задачи'],
+                summary='Удаление документа',
+                description='Удаляет документ и все связанные данные по ID документа.')
 async def delete_doc(doc_id: int):
     async with new_session() as session:
         try:
@@ -56,7 +56,7 @@ async def delete_doc(doc_id: int):
                 # Находим документ по ID
                 document = await session.get(Document, doc_id)
                 if not document:
-                    raise HTTPException(status_code=404, detail="Document not found")
+                    raise HTTPException(status_code=404, detail='Документ не найден')
 
                 # Удаляем файл с диска
                 file_path = os.path.join(DOCUMENTS_DIR, document.name)
@@ -79,28 +79,28 @@ async def delete_doc(doc_id: int):
         return {"Сообщение": "документ удален"}
 
 
-@router.post("/doc_analyse/{doc_id}",
-              tags=["Задачи"],
-              summary="Анализ документа",
-              description="Запускает анализ документа для извлечения текста по ID документа.")
+@router.post('/doc_analyse/{doc_id}',
+              tags=['Задачи'],
+              summary='Анализ документа',
+              description='Запускает анализ документа для извлечения текста по ID документа.')
 async def analyze_doc(doc_id: int):
     async with new_session() as session:
         document = await session.get(Document, doc_id)
         if not document:
-            raise HTTPException(status_code=404, detail="Document not found")
+            raise HTTPException(status_code=404, detail='Документ не найден')
 
     file_path = os.path.join(DOCUMENTS_DIR, document.name)
     # Извлечение текста из изображения
     await extract_text_from_image(doc_id, file_path)
 
-    return {"message": "Анализ начат"}
+    return {'message': 'Анализ начат'}
 
 
-@router.get("/get_text/{doc_id}",
-            tags=["Задачи"],
+@router.get('/get_text/{doc_id}',
+            tags=['Задачи'],
             response_model=DocumentTextsResponse,
-            summary="Получение текста документа",
-            description="Получает извлеченный текст для указанного документа по ID.")
+            summary='Получение текста документа',
+            description='Получает извлеченный текст для указанного документа по ID.')
 async def get_text(doc_id: int):
     async with new_session() as session:
         document_texts = await session.execute(
@@ -109,7 +109,7 @@ async def get_text(doc_id: int):
         texts = document_texts.scalars().all()
 
         if not texts:
-            raise HTTPException(status_code=404, detail="No text found for this document")
+            raise HTTPException(status_code=404, detail='Текст для этого документа не найден')
 
     return DocumentTextsResponse(
         document_id=doc_id,
