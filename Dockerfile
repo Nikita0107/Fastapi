@@ -8,12 +8,15 @@ WORKDIR /app
 COPY requirements.txt .
 
 # Устанавливаем зависимости
+
 RUN pip install --no-cache-dir -r requirements.txt
 
 RUN apt-get update && apt-get install -y tesseract-ocr-rus
 
 # Копируем все файлы проекта в контейнер
 COPY . .
+
+RUN mkdir -p /app/documents
 
 # Открываем порт, по которому будет доступно приложение
 EXPOSE 8000

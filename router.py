@@ -12,7 +12,7 @@ from schemas import DocumentResponse, DocumentTextsResponse, DocumentTextRespons
 router = APIRouter()
 
 # Каталог для хранения загруженных документов
-DOCUMENTS_DIR = 'documents'
+DOCUMENTS_DIR = '/app/documents'
 os.makedirs(DOCUMENTS_DIR, exist_ok=True)
 
 
@@ -35,10 +35,14 @@ async def document_upload(file: UploadFile = File(...)):
             session.add(document)  # Добавляем документ в сессию
             await session.flush()  # Записываем изменения в базу данных
 
-            file_path = os.path.join(DOCUMENTS_DIR, unique_filename)  # Полный путь к файлу
+            file_path = os.path.join(DOCUMENTS_DIR, unique_filename)  # Сохраняем в монтированную директорию
 
-            with open(file_path, 'wb') as buffer:  # Открываем файл для записи
-                shutil.copyfileobj(file.file, buffer)  # Копируем содержимое файла в буфер
+            try:
+                with open(file_path, 'wb') as buffer:  # Открываем файл для записи
+                    shutil.copyfileobj(file.file, buffer)  # Копируем содержимое файла в буфер
+            except Exception as e:
+                await session.rollback()  # Откатываем транзакцию в случае ошибки
+                raise HTTPException(status_code=500, detail=f'Ошибка при сохранении файла: {str(e)}')
 
             await session.commit()  # Завершаем транзакцию
 
@@ -79,10 +83,7 @@ async def delete_doc(doc_id: int):
         return {"Сообщение": "документ удален"}
 
 
-@router.put('/doc_analyse/{doc_id}',
-              tags=['Задачи'],
-              summary='Анализ документа',
-              description='Запускает анализ документа для извлечения текста по ID документа.')
+@router.post("/analyze/{doc_id}")
 async def analyze_doc(doc_id: int):
     async with new_session() as session:
         document = await session.get(Document, doc_id)
@@ -90,8 +91,9 @@ async def analyze_doc(doc_id: int):
             raise HTTPException(status_code=404, detail='Документ не найден')
 
     file_path = os.path.join(DOCUMENTS_DIR, document.name)
+
     # Извлечение текста из изображения
-    await extract_text_from_image(doc_id, file_path)
+    extract_text_from_image.delay(doc_id, file_path)  # Обратите внимание, что мы вызываем delay без await
 
     return {'message': 'Анализ начат'}
 
