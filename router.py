@@ -83,7 +83,8 @@ async def delete_doc(doc_id: int):
         return {"Сообщение": "документ удален"}
 
 
-@router.post("/analyze/{doc_id}")
+@router.put('/doc_analyse/{doc_id}', tags=['Задачи'], summary='Анализ документа',
+             description='Запустить анализ извлечения текста в указанном документе.')
 async def analyze_doc(doc_id: int):
     async with new_session() as session:
         document = await session.get(Document, doc_id)
@@ -93,7 +94,7 @@ async def analyze_doc(doc_id: int):
     file_path = os.path.join(DOCUMENTS_DIR, document.name)
 
     # Извлечение текста из изображения
-    extract_text_from_image.delay(doc_id, file_path)  # Обратите внимание, что мы вызываем delay без await
+    extract_text_from_image.delay(doc_id, file_path)
 
     return {'message': 'Анализ начат'}
 

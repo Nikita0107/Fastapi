@@ -36,7 +36,7 @@ services:
       DATABASE_URL: postgresql+asyncpg://postgres:220689@db:5432/mydb
       REDIS_URL: redis://redis:6379/0
     volumes:
-      - ./documents:/app/documents  # связываем локальную папку с папкой в контейнере, если нужно
+      - ./documents:/app/documents  # связываем локальную папку с папкой в контейнере
 
 volumes:
   postgres_data:
