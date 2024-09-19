@@ -7,10 +7,10 @@ services:
       - "8000:8000"
     depends_on:
       - db
-      - redis
+      - rabbitmq
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:220689@db:5432/mydb
-      REDIS_URL: redis://redis:6379/0
+      RABBITMQ_URL: amqp://rabbitmq:5672/
     volumes:
       - ./documents:/app/documents  # связываем локальную папку с папкой в контейнере
 
@@ -23,18 +23,21 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-  redis:
-    image: redis:6
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"         # Порт для AMQP
+      - "15672:15672"       # Порт для управления RabbitMQ (Web UI)
 
   celery:
     build: .
     command: celery -A tasks.celery worker --loglevel=info
     depends_on:
-      - redis
+      - rabbitmq
       - db
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:220689@db:5432/mydb
-      REDIS_URL: redis://redis:6379/0
+      RABBITMQ_URL: amqp://rabbitmq:5672/
     volumes:
       - ./documents:/app/documents  # связываем локальную папку с папкой в контейнере
 

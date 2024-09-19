@@ -1,4 +1,4 @@
-from tasks import extract_text_from_image
+from tasks import extract_text
 from database import new_session
 from fastapi import HTTPException, File, UploadFile, APIRouter
 from database import DocumentText, Document
@@ -94,7 +94,7 @@ async def analyze_doc(doc_id: int):
     file_path = os.path.join(DOCUMENTS_DIR, document.name)
 
     # Извлечение текста из изображения
-    extract_text_from_image.delay(doc_id, file_path)
+    extract_text.delay(doc_id, file_path)
 
     return {'message': 'Анализ начат'}
 
