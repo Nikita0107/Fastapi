@@ -1,8 +1,7 @@
 from datetime import datetime
-import sqlalchemy as sa
-import sqlalchemy.orm as so
+from sqlalchemy import Integer, String, TIMESTAMP, ForeignKey
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
-from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import Mapped, mapped_column, declarative_base, relationship
 from sqlalchemy.sql import func
 
 engine = create_async_engine('postgresql+asyncpg://postgres:220689@db:5432/mydb')
@@ -12,19 +11,19 @@ Base = declarative_base()
 
 class Document(Base):
     __tablename__ = 'documents'
-    id: so.Mapped[int] = so.mapped_column(sa.Integer, primary_key=True, autoincrement=True)
-    name: so.Mapped[str] = so.mapped_column(sa.String(64), unique=True)
-    date: so.Mapped[datetime] = so.mapped_column(sa.TIMESTAMP(timezone=True), index=True, server_default=func.now())
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(64), unique=True)
+    date: Mapped[datetime] = mapped_column(TIMESTAMP(timezone=True), index=True, server_default=func.now())
 
-    document_texts: so.Mapped['DocumentText'] = so.relationship('DocumentText', back_populates='document')
+    document_texts: Mapped['DocumentText'] = relationship('DocumentText', back_populates='document')
 
 class DocumentText(Base):
     __tablename__ = 'documents_text'
-    id: so.Mapped[int] = so.mapped_column(sa.Integer, primary_key=True, autoincrement=True)
-    document_id: so.Mapped[int] = so.mapped_column(sa.Integer, sa.ForeignKey('documents.id'))
-    text: so.Mapped[str] = so.mapped_column(sa.String(1000))
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    document_id: Mapped[int] = mapped_column(Integer, ForeignKey('documents.id'))
+    text: Mapped[str] = mapped_column(String(1000))
 
-    document: so.Mapped[Document] = so.relationship('Document', back_populates='document_texts')
+    document: Mapped[Document] = relationship('Document', back_populates='document_texts')
 
 
 async def create_tables():
