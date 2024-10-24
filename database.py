@@ -4,9 +4,10 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 from sqlalchemy.orm import Mapped, mapped_column, declarative_base, relationship
 from sqlalchemy.sql import func
 
-engine = create_async_engine('postgresql+asyncpg://postgres:220689@db:5432/mydb')
+# 'postgresql+asyncpg://postgres:220689@db:5432/mydb'
+# postgresql+asyncpg://postgres:220689@localhost/test_db)
+engine = create_async_engine('postgresql+asyncpg://postgres:220689@localhost/test_db')
 new_session = async_sessionmaker(engine, expire_on_commit=False)
-
 Base = declarative_base()
 
 class Document(Base):
@@ -34,5 +35,3 @@ async def create_tables():
 async def delete_tables():
    async with engine.begin() as conn:
        await conn.run_sync(Base.metadata.drop_all)
-
-

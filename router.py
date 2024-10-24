@@ -10,10 +10,14 @@ import sqlalchemy as sa
 from schemas import DocumentResponse, DocumentTextsResponse, DocumentTextResponse
 
 router = APIRouter()
-
-# Каталог для хранения загруженных документов
-DOCUMENTS_DIR = '/app/documents'
+#
+import tempfile
+DOCUMENTS_DIR = tempfile.mkdtemp()
 os.makedirs(DOCUMENTS_DIR, exist_ok=True)
+
+# # Каталог для хранения загруженных документов
+# DOCUMENTS_DIR = '/app/documents'
+# os.makedirs(DOCUMENTS_DIR, exist_ok=True)
 
 
 @router.post('/upload_doc', tags=['Задачи'], response_model=DocumentResponse,
