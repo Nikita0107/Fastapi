@@ -2,7 +2,6 @@ from httpx import AsyncClient, ASGITransport
 from main import app
 from database import Document, DocumentText, new_session
 
-#
 async def test_doc_delete(test_db):
     async with new_session() as session:
         # Создаем тестовый документ

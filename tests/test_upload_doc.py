@@ -7,7 +7,7 @@ from main import app
 
 
 async def test_upload_doc(test_db):
-    async with AsyncClient(transport=ASGITransport(app=app), base_url='http://test') as client:
+    async with (AsyncClient(transport=ASGITransport(app=app), base_url='http://test') as client):
         image_path = '/home/nikita/PycharmProjects/Fastapi/tests/qwe.jpeg'
         with open(image_path, 'rb') as image_file:
             response = await client.post(
@@ -16,9 +16,10 @@ async def test_upload_doc(test_db):
 
         assert response.status_code == 200
         response_data = response.json()
-        assert "id" in response_data
+        assert response_data['id'] == 1
+        assert response_data["name"] is not None, "Имя файла не должно быть None"
         assert response_data["date"] == response.json()["date"]
-        assert response_data["name"] is not None
+        assert response_data["name"].endswith('.jpeg'), "Имя файла должно заканчиваться на .jpeg"
 
  # Проверка, что запись о загруженном файле сохранена в базе данных
     async with test_db.begin():
