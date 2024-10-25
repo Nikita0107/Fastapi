@@ -1,5 +1,6 @@
 import os
 from unittest.mock import patch
+import pytest
 from httpx import AsyncClient, ASGITransport
 from main import app
 from database import new_session, Document
@@ -27,3 +28,7 @@ async def test_analyze_doc(test_db):
         # Проверяем, что документ существует в базе данных
         document = await session.get(Document, doc_id)
         assert document is not None
+
+
+if __name__ == '__main__':
+    pytest.main()
