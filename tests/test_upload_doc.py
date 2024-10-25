@@ -21,11 +21,12 @@ async def test_upload_doc(test_db):
         assert response_data["date"] == response.json()["date"]
         assert response_data["name"].endswith('.jpeg'), "Имя файла должно заканчиваться на .jpeg"
 
- # Проверка, что запись о загруженном файле сохранена в базе данных
+ # Проверка, что запись сохранена
     async with test_db.begin():
         result = await test_db.execute(select(Document).where(Document.id == response_data["id"]))
         document = result.scalar_one_or_none()
         assert document is not None, f"Документ с ID {response_data['id']} не найден в базе данных"
         assert document.name == response_data["name"], "Имена файлов не совпадают"
-        response_date = parser.isoparse(response_data["date"])  # Преобразуем строку из ответа в datetime
+        # преобразуем в datetime
+        response_date = parser.isoparse(response_data["date"])
         assert document.date.replace(tzinfo=timezone.utc) == response_date, "Даты не совпадают"

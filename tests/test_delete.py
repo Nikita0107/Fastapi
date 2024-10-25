@@ -16,14 +16,13 @@ async def test_doc_delete(test_db):
         await session.commit()
 
     async with AsyncClient(transport=ASGITransport(app=app), base_url='http://test') as client:
-        # Выполняем DELETE запрос
+        # Выполняем запрос на удаление
         response = await client.delete(f'/doc_delete/{doc_id}')
 
-    # Проверяем ответ
     assert response.status_code == 200
     assert response.json() == {"Сообщение": "документ удален"}
 
-    # Проверяем, что документ удалён из базы данных
+    # Проверяем что документ удалён
     async with new_session() as session:
         deleted_document = await session.get(Document, doc_id)
-        assert deleted_document is None  # Документ должен быть удалён
+        assert deleted_document is None  #

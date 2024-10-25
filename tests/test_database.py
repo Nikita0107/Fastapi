@@ -19,5 +19,4 @@ async def test_tables_exist(test_db: AsyncSession):
     # Проверяем, что таблицы созданы
     await check_tables_exist(test_db, [Document, DocumentText])
 
-    # Если все проверки прошли успешно, делаем коммит
     await test_db.commit()

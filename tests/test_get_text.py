@@ -1,14 +1,10 @@
-import pytest
 from httpx import AsyncClient, ASGITransport
 import sqlalchemy as sa
 from main import app
 from database import new_session, Document, DocumentText
 
-# Путь к изображению
 image_path = '/home/nikita/PycharmProjects/Fastapi/tests/qwe.jpeg'
 
-
-@pytest.mark.asyncio
 async def test_get_text(test_db):
     async with new_session() as session:
         # Создаем тестовый документ
@@ -33,7 +29,7 @@ async def test_get_text(test_db):
         assert len(data['texts']) == 1
         assert data['texts'][0]['text'] == 'Пример текста извлеченного из изображения.'
 
-    # Удаление тестового документа и текста после теста (опционально)
+    # Удаление тестового документа и текста
     async with new_session() as session:
         await session.execute(sa.delete(DocumentText).where(DocumentText.document_id == doc_id))
         await session.commit()
