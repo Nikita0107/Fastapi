@@ -1,124 +1,141 @@
 from tasks import extract_text
-from database import new_session
-from fastapi import HTTPException, File, UploadFile, APIRouter
-from database import DocumentText, Document
+from fastapi import HTTPException, File, UploadFile, APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, delete
+from database import AsyncSessionLocal, DocumentText, Document
 from datetime import datetime, timezone
 import shutil
 import os
 import uuid
-import sqlalchemy as sa
 from schemas import DocumentResponse, DocumentTextsResponse, DocumentTextResponse
 
 router = APIRouter()
-#
-import tempfile
-DOCUMENTS_DIR = tempfile.mkdtemp()
+
+# Каталог для хранения загруженных документов
+DOCUMENTS_DIR = '/app/documents'
 os.makedirs(DOCUMENTS_DIR, exist_ok=True)
 
-# # Каталог для хранения загруженных документов
-# DOCUMENTS_DIR = '/app/documents'
+# import tempfile
+# DOCUMENTS_DIR = tempfile.mkdtemp()
 # os.makedirs(DOCUMENTS_DIR, exist_ok=True)
 
+# Зависимость для получения асинхронной сессии
+async def get_session() -> AsyncSession:
+    async with AsyncSessionLocal() as session:
+        yield session
 
 @router.post('/upload_doc', tags=['Задачи'], response_model=DocumentResponse,
              summary='Загрузка документа',
-             description='Загружает документ и сохраняет его в системе. '
-                         'Поддерживается максимальный размер файла 2 МБ.')
-async def document_upload(file: UploadFile = File(...)):
-    file.file.seek(0, 2)  # Перемещаем указатель в конец файла
-    file_size = file.file.tell()  # Получаем размер файла
-    await file.seek(0)  # Возвращаем указатель в начало файла
-    if file_size > 2 * 1024 * 1024:  # Проверяем размер файла
-        raise HTTPException(status_code=400, detail='большой размер файла')
+             description='Загружает документ и сохраняет его в системе.')
+async def document_upload(
+    file: UploadFile = File(...),
+    session: AsyncSession = Depends(get_session)
+):
+    # Убираем проверку размера файла
 
-    unique_filename = f'{uuid.uuid4()}.{file.filename.split(".")[-1]}'  # Генерируем уникальное имя файла
+    # Генерируем уникальное имя файла
+    unique_filename = f'{uuid.uuid4()}.{file.filename.split(".")[-1]}'
 
-    async with new_session() as session:  # Создаем новую сессию в базе данных
-        async with session.begin():  # Начинаем транзакцию
-            document = Document(name=unique_filename, date=datetime.now(timezone.utc))  # Создаем новый документ
-            session.add(document)  # Добавляем документ в сессию
-            await session.flush()  # Записываем изменения в базу данных
+    # Путь к файлу
+    file_path = os.path.join(DOCUMENTS_DIR, unique_filename)
 
-            file_path = os.path.join(DOCUMENTS_DIR, unique_filename)  # Сохраняем в монтированную директорию
+    # Сохраняем файл на диск
+    try:
+        # Открываем файл для записи и сохраняем загруженный файл
+        with open(file_path, 'wb') as buffer:
+            shutil.copyfileobj(file.file, buffer)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f'Ошибка при сохранении файла: {str(e)}')
 
-            try:
-                with open(file_path, 'wb') as buffer:  # Открываем файл для записи
-                    shutil.copyfileobj(file.file, buffer)  # Копируем содержимое файла в буфер
-            except Exception as e:
-                await session.rollback()  # Откатываем транзакцию в случае ошибки
-                raise HTTPException(status_code=500, detail=f'Ошибка при сохранении файла: {str(e)}')
+    # Создаем запись в базе данных
+    document = Document(name=unique_filename, date=datetime.now(timezone.utc))
+    session.add(document)
+    try:
+        await session.commit()
+        await session.refresh(document)
+    except Exception as e:
+        await session.rollback()
+        # Удаляем файл в случае ошибки записи в базу данных
+        if os.path.exists(file_path):
+            os.remove(file_path)
+        raise HTTPException(status_code=500, detail=f'Ошибка при сохранении документа в базе данных: {str(e)}')
 
-            await session.commit()  # Завершаем транзакцию
-
-    return document
-
+    return DocumentResponse(
+        id=document.id,
+        name=document.name,
+        date=document.date
+    )
 
 @router.delete('/doc_delete/{doc_id}',
-                tags=['Задачи'],
-                summary='Удаление документа',
-                description='Удаляет документ и все связанные данные по ID документа.')
-async def delete_doc(doc_id: int):
-    async with new_session() as session:
-        try:
-            async with session.begin():
-                # Находим документ по ID
-                document = await session.get(Document, doc_id)
-                if not document:
-                    raise HTTPException(status_code=404, detail='Документ не найден')
+               tags=['Задачи'],
+               summary='Удаление документа',
+               description='Удаляет документ и все связанные данные по ID документа.')
+async def delete_doc(doc_id: int, session: AsyncSession = Depends(get_session)):
+    try:
+        # Находим документ по ID
+        result = await session.execute(
+            select(Document).where(Document.id == doc_id)
+        )
+        document = result.scalar_one_or_none()
+        if not document:
+            raise HTTPException(status_code=404, detail='Документ не найден')
 
-                # Удаляем файл с диска
-                file_path = os.path.join(DOCUMENTS_DIR, document.name)
-                if os.path.exists(file_path):
-                    os.remove(file_path)
+        # Удаляем файл с диска
+        file_path = os.path.join(DOCUMENTS_DIR, document.name)
+        if os.path.exists(file_path):
+            os.remove(file_path)
 
-                # Удаляем запись из таблицы DocumentText
-                await session.execute(sa.delete(DocumentText).where(DocumentText.document_id == doc_id))
-
-            await session.commit()  # Завершаем транзакцию
-
-        except Exception as e:
-            await session.rollback()  # Откатываем транзакцию в случае ошибки
-            raise HTTPException(status_code=500, detail=str(e))
+        # Удаляем связанные записи из таблицы DocumentText
+        await session.execute(delete(DocumentText).where(DocumentText.document_id == doc_id))
 
         # Удаляем запись из таблицы Document
         await session.delete(document)
         await session.commit()
+    except Exception as e:
+        await session.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
-        return {"Сообщение": "документ удален"}
-
+    return {"Сообщение": "Документ удален"}
 
 @router.put('/doc_analyse/{doc_id}', tags=['Задачи'], summary='Анализ документа',
-             description='Запустить анализ извлечения текста в указанном документе.')
-async def analyze_doc(doc_id: int):
-    async with new_session() as session:
-        document = await session.get(Document, doc_id)
-        if not document:
-            raise HTTPException(status_code=404, detail='Документ не найден')
+            description='Запустить анализ извлечения текста в указанном документе.')
+async def analyze_doc(doc_id: int, session: AsyncSession = Depends(get_session)):
+    # Проверяем наличие документа
+    result = await session.execute(
+        select(Document).where(Document.id == doc_id)
+    )
+    document = result.scalar_one_or_none()
+    if not document:
+        raise HTTPException(status_code=404, detail='Документ не найден')
 
     file_path = os.path.join(DOCUMENTS_DIR, document.name)
 
-    # Извлечение текста из изображения
+    # Запускаем задачу Celery по извлечению текста
     extract_text.delay(doc_id, file_path)
 
     return {'message': 'Анализ начат'}
-
 
 @router.get('/get_text/{doc_id}',
             tags=['Задачи'],
             response_model=DocumentTextsResponse,
             summary='Получение текста документа',
             description='Получает извлеченный текст для указанного документа по ID.')
-async def get_text(doc_id: int):
-    async with new_session() as session:
-        document_texts = await session.execute(
-            sa.select(DocumentText).where(DocumentText.document_id == doc_id)
-        )
-        texts = document_texts.scalars().all()
+async def get_text(doc_id: int, session: AsyncSession = Depends(get_session)):
+    result = await session.execute(
+        select(DocumentText).where(DocumentText.document_id == doc_id)
+    )
+    texts = result.scalars().all()
 
-        if not texts:
-            raise HTTPException(status_code=404, detail='Текст для этого документа не найден')
+    if not texts:
+        raise HTTPException(status_code=404, detail='Текст для этого документа не найден')
 
     return DocumentTextsResponse(
         document_id=doc_id,
-        texts=[DocumentTextResponse.model_validate(text) for text in texts]
+        texts=[
+            DocumentTextResponse(
+                id=text.id,
+                document_id=text.document_id,
+                text=text.text
+            ) for text in texts
+        ]
     )

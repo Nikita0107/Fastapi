@@ -1,12 +1,12 @@
 from httpx import AsyncClient, ASGITransport
 import sqlalchemy as sa
 from main import app
-from database import new_session, Document, DocumentText
+from database import AsyncSessionLocal, Document, DocumentText
 
 image_path = '/home/nikita/PycharmProjects/Fastapi/tests/qwe.jpeg'
 
 async def test_get_text(test_db):
-    async with new_session() as session:
+    async with AsyncSessionLocal() as session:
         # Создаем тестовый документ
         test_document = Document(name='test_document.txt')
         session.add(test_document)
@@ -30,7 +30,7 @@ async def test_get_text(test_db):
         assert data['texts'][0]['text'] == 'Пример текста извлеченного из изображения.'
 
     # Удаление тестового документа и текста
-    async with new_session() as session:
+    async with AsyncSessionLocal() as session:
         await session.execute(sa.delete(DocumentText).where(DocumentText.document_id == doc_id))
         await session.commit()
         await session.delete(test_document)

@@ -26,7 +26,7 @@ services:
   rabbitmq:
     image: rabbitmq:3-management
     ports:
-      - "5672:5672"         # Порт для AMQP
+      - "5673:5672"         # Порт для AMQP
       - "15672:15672"       # Порт для управления RabbitMQ (Web UI)
 
   celery:
@@ -37,7 +37,7 @@ services:
       - db
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:220689@db:5432/mydb
-      RABBITMQ_URL: amqp://rabbitmq:5672/
+      RABBITMQ_URL: amqp://rabbitmq:5673/
     volumes:
       - ./documents:/app/documents  # связываем локальную папку с папкой в контейнере
 

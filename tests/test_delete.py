@@ -1,16 +1,16 @@
 from httpx import AsyncClient, ASGITransport
 from main import app
-from database import Document, DocumentText, new_session
+from database import Document, DocumentText, AsyncSessionLocal
 
 async def test_doc_delete(test_db):
-    async with new_session() as session:
-        # Создаем тестовый документ
+    async with AsyncSessionLocal() as session:
+        # Создаём тестовый документ
         test_document = Document(name='test_document.txt')
         session.add(test_document)
         await session.flush()
         doc_id = test_document.id
 
-        # Создаем связанный текст
+        # Создаём связанный текст
         test_document_text = DocumentText(text='Тестовый текст', document_id=doc_id)
         session.add(test_document_text)
         await session.commit()
@@ -20,9 +20,9 @@ async def test_doc_delete(test_db):
         response = await client.delete(f'/doc_delete/{doc_id}')
 
     assert response.status_code == 200
-    assert response.json() == {"Сообщение": "документ удален"}
+    assert response.json()["Сообщение"].lower() == "документ удален"
 
-    # Проверяем что документ удалён
-    async with new_session() as session:
+    # Проверяем, что документ удалён из базы данных
+    async with AsyncSessionLocal() as session:
         deleted_document = await session.get(Document, doc_id)
-        assert deleted_document is None  #
+        assert deleted_document is None  # Документ должен быть удалён

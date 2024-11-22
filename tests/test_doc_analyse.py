@@ -3,11 +3,11 @@ from unittest.mock import patch
 import pytest
 from httpx import AsyncClient, ASGITransport
 from main import app
-from database import new_session, Document
+from database import AsyncSessionLocal, Document
 from router import DOCUMENTS_DIR
 
 async def test_analyze_doc(test_db):
-    async with new_session() as session:
+    async with AsyncSessionLocal() as session:
         # Создаем тестовый документ
         test_document = Document(name='test_document.txt')
         session.add(test_document)
@@ -24,7 +24,7 @@ async def test_analyze_doc(test_db):
             assert response.json() == {'message': 'Анализ начат'}
             mock_extract_text.assert_called_once_with(doc_id, os.path.join(DOCUMENTS_DIR, test_document.name))
 
-    async with new_session() as session:
+    async with AsyncSessionLocal() as session:
         # Проверяем, что документ существует в базе данных
         document = await session.get(Document, doc_id)
         assert document is not None
