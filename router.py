@@ -8,12 +8,10 @@ import shutil
 import os
 import uuid
 from schemas import DocumentResponse, DocumentTextsResponse, DocumentTextResponse
+from conf import DOCUMENTS_DIR
 
 router = APIRouter()
 
-# Каталог для хранения загруженных документов
-DOCUMENTS_DIR = '/app/documents'
-os.makedirs(DOCUMENTS_DIR, exist_ok=True)
 
 # import tempfile
 # DOCUMENTS_DIR = tempfile.mkdtemp()
@@ -31,8 +29,6 @@ async def document_upload(
     file: UploadFile = File(...),
     session: AsyncSession = Depends(get_session)
 ):
-    # Убираем проверку размера файла
-
     # Генерируем уникальное имя файла
     unique_filename = f'{uuid.uuid4()}.{file.filename.split(".")[-1]}'
 

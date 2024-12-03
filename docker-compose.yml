@@ -13,6 +13,8 @@ services:
       RABBITMQ_URL: amqp://rabbitmq:5672/
     volumes:
       - ./documents:/app/documents  # связываем локальную папку с папкой в контейнере
+    networks:
+      - shared_network
 
   db:
     image: postgres:13
@@ -22,12 +24,16 @@ services:
       POSTGRES_DB: mydb
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - shared_network
 
   rabbitmq:
     image: rabbitmq:3-management
     ports:
       - "5673:5672"         # Порт для AMQP
       - "15672:15672"       # Порт для управления RabbitMQ (Web UI)
+    networks:
+      - shared_network
 
   celery:
     build: .
@@ -40,6 +46,12 @@ services:
       RABBITMQ_URL: amqp://rabbitmq:5673/
     volumes:
       - ./documents:/app/documents  # связываем локальную папку с папкой в контейнере
+    networks:
+      - shared_network
 
 volumes:
   postgres_data:
+
+networks:
+  shared_network:
+    external: true
