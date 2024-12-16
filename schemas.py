@@ -9,8 +9,11 @@ class DocumentResponse(BaseModel):
     id: int
     name: str
     date: datetime
+    url: str  # Новое поле для URL файла
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = {
+        "from_attributes": True
+    }
 
 class DocumentTextResponse(BaseModel):
     id: int
@@ -24,3 +27,6 @@ class DocumentTextsResponse(BaseModel):
     texts: List[DocumentTextResponse]
 
     model_config = ConfigDict(from_attributes=True)
+
+
+

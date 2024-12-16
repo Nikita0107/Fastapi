@@ -22,10 +22,13 @@ async def get_session() -> AsyncSession:
     async with AsyncSessionLocal() as session:
         yield session
 
+from fastapi import Request
+
 @router.post('/upload_doc', tags=['Задачи'], response_model=DocumentResponse,
              summary='Загрузка документа',
              description='Загружает документ и сохраняет его в системе.')
 async def document_upload(
+    request: Request,  # Переместили этот параметр вперёд
     file: UploadFile = File(...),
     session: AsyncSession = Depends(get_session)
 ):
@@ -56,10 +59,14 @@ async def document_upload(
             os.remove(file_path)
         raise HTTPException(status_code=500, detail=f'Ошибка при сохранении документа в базе данных: {str(e)}')
 
+    # Формируем URL для доступа к файлу
+    file_url = f"{request.base_url}documents/{unique_filename}"
+
     return DocumentResponse(
         id=document.id,
         name=document.name,
-        date=document.date
+        date=document.date,
+        url=file_url  # Возвращаем URL файла
     )
 
 @router.delete('/doc_delete/{doc_id}',
